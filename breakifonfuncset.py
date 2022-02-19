@@ -19,9 +19,9 @@ class GlobalOptions(object):
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
-        'command script add -f breakifonfuncset.breakifonfunc biofset')
+        'command script add -f breakifonfuncset.breakifonfuncset biofset')
 
-def breakifonfunc(debugger, command, exe_ctx, result, internal_dict):
+def breakifonfuncset(debugger, command, exe_ctx, result, internal_dict):
     '''
     usage: biof regex0 [Optional_ModuleName] ||| regex1  ModuleName1 ||| regex2 ModuleName2
     Regex breakpoint that stops only if the second regex breakpoint is in the stack trace
@@ -63,7 +63,7 @@ def breakifonfunc(debugger, command, exe_ctx, result, internal_dict):
     GlobalOptions.addSymbols(regex_modules, options, breakpoint)
 
     # 设置回掉函数
-    breakpoint.SetScriptCallbackFunction("breakifonfunc.breakpointHandler")
+    breakpoint.SetScriptCallbackFunction("breakifonfuncset.breakpointHandler")
 
     if not breakpoint.IsValid() or breakpoint.num_locations == 0:
         result.AppendWarning("Breakpoint isn't valid or hasn't found any hits: " + clean_command[0])
@@ -86,19 +86,19 @@ def breakpointHandler(frame, bp_loc, dict):
     thread = frame.thread
 
     if len(regex_modules) >= len(thread.frames):
-        print('breakifonfunc ** try hit, regex_modules >= thread.frames')
+        print('breakifonfuncset ** try hit, regex_modules >= thread.frames')
         return False
 
     if not options.direct or options.direct == 'd':
         for idx in range(len(regex_modules)):
             cframe = thread.frames[idx + 1]
             if cframe.module.file.basename != regex_modules[idx][1]:
-                print("breakifonfunc ** {} module != {}".formart(str(cframe), regex_modules[idx][1]))
+                print("breakifonfuncset ** {} module != {}".formart(str(cframe), regex_modules[idx][1]))
                 return False
             if not re.search(regex_modules[idx][0], cframe.symbol.name):
-                print("breakifonfunc ** regex: {} can`t re {}".format(regex_modules[idx][0], cframe.symbol.name))
+                print("breakifonfuncset ** regex: {} can`t re {}".format(regex_modules[idx][0], cframe.symbol.name))
                 return False
-        print("breakifonfunc ** all re cmp")
+        print("breakifonfuncset ** all re cmp")
         return True
     elif options.direct == 's':
         rescmpIdx = 0
@@ -117,9 +117,9 @@ def breakpointHandler(frame, bp_loc, dict):
 
         isHit = len(res) == len(regex_modules)
         if not isHit:
-            print("breakifonfunc ** try hit -s, regex is {} times , total is {} \n".format(len(res), len(regex_modules)))
+            print("breakifonfuncset ** try hit -s, regex is {} times , total is {} \n".format(len(res), len(regex_modules)))
         else:
-            print("breakifonfunc ** hit -s regex {} times".format(len(res)))
+            print("breakifonfuncset ** hit -s regex {} times".format(len(res)))
         return isHit
     elif options.direct == 'm':
         temThreadFrames = [frame for frame in thread.frames]
@@ -138,17 +138,17 @@ def breakpointHandler(frame, bp_loc, dict):
 
         isHit = len(res) == len(regex_modules)
         if not isHit:
-            print("breakifonfunc ** try hit -m, regex is {} times , total is {}".format(len(res), len(regex_modules)))
+            print("breakifonfuncset ** try hit -m, regex is {} times , total is {}".format(len(res), len(regex_modules)))
         else:
-            print("breakifonfunc ** hit -m regex {} times".format(len(res)))
+            print("breakifonfuncset ** hit -m regex {} times".format(len(res)))
         return isHit
     else:
-        print("breakifonfunc ** not define optinos.direct = {}".format(options.direct))
+        print("breakifonfuncset ** not define optinos.direct = {}".format(options.direct))
         return False
 
 
 def generateOptionParser():
-    usage = breakifonfunc.__doc__
+    usage = breakifonfuncset.__doc__
     parser = optparse.OptionParser(usage=usage, prog="biof")
     parser.add_option("-d", "--direct",
                   action="store",
